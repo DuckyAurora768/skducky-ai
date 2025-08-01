@@ -1,6 +1,11 @@
-# SkDucky AI - Intelligent Skript Code Generator
+# SkDucky AI - Intelligent Skript Code Generator 🦆
+
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy)
 
 SkDucky AI is an intelligent assistant that learns from examples to automatically generate Skript code. The system uses simple machine learning to relate natural language descriptions to functional Skript code.
+
+## 🌐 Live Demo
+**🚀 [Try SkDucky AI Live](https://skducky-ai.onrender.com)** (Will be available after deployment)
 
 ## 🚀 Installation and Usage
 
