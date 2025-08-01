@@ -4,7 +4,7 @@ services:
     env: python
     runtime: python-3.12.0
     buildCommand: pip install --upgrade pip && pip install -r requirements.txt
-    startCommand: uvicorn main:app --host=0.0.0.0 --port=$PORT
+    startCommand: python -c "import uvicorn; uvicorn.run('main:app', host='0.0.0.0', port=int(__import__('os').environ.get('PORT', 8000)))"
     envVars:
       - key: PYTHON_VERSION
         value: 3.12.0
