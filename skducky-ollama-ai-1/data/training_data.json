@@ -1,0 +1,20 @@
+[
+    {
+        "prompt": "give diamond on join",
+        "code": "on join:\n    give 1 diamond to player\n    send \"Welcome! You've received a diamond.\" to player",
+        "timestamp": "2023-10-01T12:00:00",
+        "usage_count": 0
+    },
+    {
+        "prompt": "teleport to spawn on death",
+        "code": "on death:\n    wait 3 seconds\n    teleport player to spawn",
+        "timestamp": "2023-10-01T12:00:00",
+        "usage_count": 0
+    },
+    {
+        "prompt": "fly command",
+        "code": "command /fly:\n    trigger:\n        if player has permission \"skript.fly\":\n            set flight mode of player to true\n            send \"Flight mode activated!\" to player\n        else:\n            send \"You don't have permission to fly\" to player",
+        "timestamp": "2023-10-01T12:00:00",
+        "usage_count": 0
+    }
+]

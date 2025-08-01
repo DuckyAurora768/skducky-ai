@@ -1,0 +1,1373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SkDucky AI - Modern Interface</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🦆</text></svg>">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        /* CSS Variables & Base */
+        :root {
+            --primary-color: #3b82f6;
+            --primary-hover: #2563eb;
+            --duck-color: #fbbf24;
+            --success-color: #22c55e;
+            --error-color: #ef4444;
+            --warning-color: #f59e0b;
+            
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8fafc;
+            --surface: #ffffff;
+            --border: #e2e8f0;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --text-muted: #94a3b8;
+            
+            --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+            
+            --sidebar-width: 280px;
+            --header-height: 80px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        /* App Layout */
+        .app-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: var(--surface);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            height: 100vh;
+            left: 0;
+            top: 0;
+            z-index: 100;
+        }
+
+        .sidebar-header {
+            padding: 24px 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .duck-avatar {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary-color), var(--duck-color));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .sidebar-nav {
+            flex: 1;
+            padding: 20px 0;
+            overflow-y: auto;
+        }
+
+        .nav-section {
+            margin-bottom: 32px;
+        }
+
+        .nav-title {
+            padding: 0 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 20px;
+            margin: 0 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: var(--text-secondary);
+        }
+
+        .nav-item:hover {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+
+        .nav-item.active {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .nav-item i {
+            width: 20px;
+            text-align: center;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            margin-left: var(--sidebar-width);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .main-header {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 24px 32px;
+        }
+
+        .page-title {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .page-subtitle {
+            color: var(--text-secondary);
+            font-size: 16px;
+        }
+
+        .content-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        /* Page Management */
+        .page {
+            display: none;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .page.active {
+            display: flex;
+        }
+
+        /* Chat Layout */
+        .chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px 32px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .message {
+            max-width: 80%;
+            animation: slideInUp 0.3s ease-out;
+        }
+
+        .message.user {
+            align-self: flex-end;
+        }
+
+        .message.assistant {
+            align-self: flex-start;
+        }
+
+        .message-content {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 16px 20px;
+            box-shadow: var(--shadow);
+            position: relative;
+        }
+
+        .message.user .message-content {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .message-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .message.user .message-header {
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .code-block {
+            background: #1e293b;
+            color: #e2e8f0;
+            border-radius: 8px;
+            padding: 16px;
+            margin: 12px 0;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            overflow-x: auto;
+            position: relative;
+        }
+
+        .code-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #374151;
+        }
+
+        .copy-btn {
+            background: #374151;
+            border: none;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: background 0.2s;
+        }
+
+        .copy-btn:hover {
+            background: #4b5563;
+        }
+
+        /* Chat Input */
+        .chat-input-container {
+            background: var(--surface);
+            border-top: 1px solid var(--border);
+            padding: 20px 32px;
+        }
+
+        .input-wrapper {
+            position: relative;
+            background: var(--surface);
+            border: 2px solid var(--border);
+            border-radius: 16px;
+            overflow: hidden;
+            transition: border-color 0.2s;
+        }
+
+        .input-wrapper:focus-within {
+            border-color: var(--primary-color);
+        }
+
+        .chat-input {
+            width: 100%;
+            border: none;
+            outline: none;
+            padding: 16px 60px 16px 20px;
+            font-size: 16px;
+            line-height: 1.5;
+            resize: none;
+            min-height: 24px;
+            max-height: 120px;
+            background: transparent;
+            font-family: inherit;
+        }
+
+        .send-btn {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: var(--primary-color);
+            border: none;
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .send-btn:hover {
+            background: var(--primary-hover);
+            transform: translateY(-50%) scale(1.05);
+        }
+
+        .send-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: translateY(-50%);
+        }
+
+        /* Input Options */
+        .input-options {
+            display: flex;
+            gap: 12px;
+            margin-top: 12px;
+            flex-wrap: wrap;
+        }
+
+        .option-chip {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+            user-select: none;
+        }
+
+        .option-chip:hover {
+            border-color: var(--primary-color);
+            background: #f0f9ff;
+        }
+
+        .option-chip.active {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        /* Welcome Screen */
+        .welcome-screen {
+            text-align: center;
+            padding: 60px 20px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .welcome-duck {
+            font-size: 80px;
+            margin-bottom: 20px;
+        }
+
+        .welcome-title {
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            background: linear-gradient(135deg, var(--primary-color), var(--duck-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .welcome-subtitle {
+            font-size: 18px;
+            color: var(--text-secondary);
+            margin-bottom: 40px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* Quick Actions */
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .quick-action {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: var(--shadow);
+            text-align: left;
+        }
+
+        .quick-action:hover {
+            border-color: var(--primary-color);
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .quick-action-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--primary-color), var(--duck-color));
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            margin-bottom: 16px;
+        }
+
+        .quick-action-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .quick-action-desc {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        /* Status Indicators */
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .status-indicator.online {
+            background: #dcfce7;
+            color: #16a34a;
+        }
+
+        .status-indicator.offline {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        .status-indicator.loading {
+            background: #fef3c7;
+            color: #d97706;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 24px;
+            padding: 32px;
+        }
+
+        .stat-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: var(--shadow);
+        }
+
+        .stat-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .stat-icon {
+            font-size: 24px;
+        }
+
+        .stat-title {
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 8px;
+        }
+
+        /* Loading Animation */
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            padding: 40px;
+            color: var(--text-secondary);
+        }
+
+        .spinner {
+            width: 24px;
+            height: 24px;
+            border: 3px solid var(--border);
+            border-top: 3px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        /* Typing Indicator */
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 16px 20px;
+            background: var(--surface);
+            border-radius: 16px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow);
+        }
+
+        .typing-dots {
+            display: flex;
+            gap: 4px;
+        }
+
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--text-muted);
+            border-radius: 50%;
+            animation: typing 1.4s infinite;
+        }
+
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+        /* Form Elements */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .form-group textarea {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+            resize: vertical;
+            transition: border-color 0.2s;
+        }
+
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .learn-container {
+            padding: 32px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        /* Animations */
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes typing {
+            0%, 60%, 100% { transform: scale(1); opacity: 0.5; }
+            30% { transform: scale(1.2); opacity: 1; }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s;
+            }
+            
+            .sidebar.open {
+                transform: translateX(0);
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+            
+            .quick-actions {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+                padding: 20px;
+            }
+            
+            .main-header {
+                padding: 16px 20px;
+            }
+            
+            .page-title {
+                font-size: 24px;
+            }
+            
+            .chat-messages {
+                padding: 16px 20px;
+            }
+            
+            .chat-input-container {
+                padding: 16px 20px;
+            }
+        }
+
+        /* Dark Mode Variables (for future implementation) */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-primary: #0f172a;
+                --bg-secondary: #1e293b;
+                --surface: #334155;
+                --border: #475569;
+                --text-primary: #f1f5f9;
+                --text-secondary: #cbd5e1;
+                --text-muted: #94a3b8;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <div class="duck-avatar">🦆</div>
+                    <span>SkDucky AI</span>
+                </div>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-title">Main</div>
+                    <div class="nav-item active" data-page="chat">
+                        <i class="fas fa-comments"></i>
+                        <span>Chat with SkDucky</span>
+                    </div>
+                    <div class="nav-item" data-page="examples">
+                        <i class="fas fa-book"></i>
+                        <span>Examples</span>
+                    </div>
+                    <div class="nav-item" data-page="learn">
+                        <i class="fas fa-graduation-cap"></i>
+                        <span>Teach SkDucky</span>
+                    </div>
+                </div>
+                
+                <div class="nav-section">
+                    <div class="nav-title">Analytics</div>
+                    <div class="nav-item" data-page="stats">
+                        <i class="fas fa-chart-bar"></i>
+                        <span>Learning Stats</span>
+                    </div>
+                </div>
+                
+                <div class="nav-section">
+                    <div class="nav-title">AI Models</div>
+                    <div class="nav-item" data-page="ollama">
+                        <i class="fas fa-robot"></i>
+                        <span>Ollama Settings</span>
+                    </div>
+                </div>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Chat Page -->
+            <div id="chat-page" class="page active">
+                <header class="main-header">
+                    <h1 class="page-title">Chat with SkDucky 🦆</h1>
+                    <p class="page-subtitle">Your friendly Skript code assistant</p>
+                </header>
+                
+                <div class="content-area">
+                    <div class="chat-container">
+                        <!-- Welcome Screen -->
+                        <div id="welcome-screen" class="welcome-screen">
+                            <div class="welcome-duck">🦆</div>
+                            <h2 class="welcome-title">Hello! I'm SkDucky</h2>
+                            <p class="welcome-subtitle">Your friendly Skript coding assistant. Ask me to generate code, explain concepts, or help with debugging!</p>
+                            
+                            <div class="quick-actions">
+                                <div class="quick-action" onclick="quickPrompt('Create a welcome system that gives new players a diamond and sends them a message')">
+                                    <div class="quick-action-icon">💎</div>
+                                    <div class="quick-action-title">Welcome System</div>
+                                    <div class="quick-action-desc">Create a join event with rewards</div>
+                                </div>
+                                
+                                <div class="quick-action" onclick="quickPrompt('Make a fly command with permissions and toggle functionality')">
+                                    <div class="quick-action-icon">🦅</div>
+                                    <div class="quick-action-title">Fly Command</div>
+                                    <div class="quick-action-desc">Toggle flight with permissions</div>
+                                </div>
+                                
+                                <div class="quick-action" onclick="quickPrompt('Create a heal command with cooldown and admin features')">
+                                    <div class="quick-action-icon">❤️</div>
+                                    <div class="quick-action-title">Heal Command</div>
+                                    <div class="quick-action-desc">Healing with cooldown system</div>
+                                </div>
+                                
+                                <div class="quick-action" onclick="quickPrompt('Make a punishment system with kick and ban commands')">
+                                    <div class="quick-action-icon">⚖️</div>
+                                    <div class="quick-action-title">Punishment System</div>
+                                    <div class="quick-action-desc">Admin commands for moderation</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Chat Messages -->
+                        <div id="chat-messages" class="chat-messages" style="display: none;"></div>
+                    </div>
+                </div>
+                
+                <!-- Chat Input -->
+                <div class="chat-input-container">
+                    <div class="input-wrapper">
+                        <textarea id="chat-input" class="chat-input" placeholder="Ask SkDucky to generate Skript code... 🦆" rows="1"></textarea>
+                        <button id="send-btn" class="send-btn">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="input-options">
+                        <div class="option-chip active" id="explanation-toggle">
+                            <i class="fas fa-info-circle"></i>
+                            <span>Include explanation</span>
+                        </div>
+                        <div class="option-chip" id="ollama-toggle">
+                            <i class="fas fa-robot"></i>
+                            <span>Use Ollama AI</span>
+                            <span class="status-indicator loading" id="ollama-status">Checking...</span>
+                        </div>
+                        <div class="option-chip active" id="function-priority">
+                            <i class="fas fa-code"></i>
+                            <span>Prioritize functions</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Examples Page -->
+            <div id="examples-page" class="page">
+                <header class="main-header">
+                    <h1 class="page-title">📚 Learned Examples</h1>
+                    <p class="page-subtitle">Browse through SkDucky's knowledge base</p>
+                </header>
+                <div class="content-area">
+                    <div id="examples-container">
+                        <div class="loading">
+                            <div class="spinner"></div>
+                            <p>Loading examples...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Learn Page -->
+            <div id="learn-page" class="page">
+                <header class="main-header">
+                    <h1 class="page-title">🎓 Teach SkDucky</h1>
+                    <p class="page-subtitle">Help SkDucky learn new patterns</p>
+                </header>
+                <div class="content-area">
+                    <div class="learn-container">
+                        <div class="form-group">
+                            <label for="learn-prompt">What should this code do?</label>
+                            <textarea id="learn-prompt" placeholder="Example: give player a diamond when they join"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="learn-code">Skript code:</label>
+                            <textarea id="learn-code" rows="8" placeholder="on join:&#10;    give 1 diamond to player"></textarea>
+                        </div>
+                        <button id="teach-btn" class="send-btn" style="position: static; transform: none; width: auto; height: auto; border-radius: 8px; padding: 12px 24px;">
+                            🦆 Teach SkDucky
+                        </button>
+                        <div id="learn-result" style="margin-top: 20px;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats Page -->
+            <div id="stats-page" class="page">
+                <header class="main-header">
+                    <h1 class="page-title">📊 Learning Statistics</h1>
+                    <p class="page-subtitle">Track SkDucky's progress</p>
+                </header>
+                <div class="content-area">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-header">
+                                <div class="stat-icon">🧠</div>
+                                <div class="stat-title">Traditional AI</div>
+                            </div>
+                            <div class="stat-value" id="traditional-examples">-</div>
+                            <div style="font-size: 14px; color: var(--text-secondary);">Total Examples</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-header">
+                                <div class="stat-icon">🤖</div>
+                                <div class="stat-title">Ollama AI</div>
+                            </div>
+                            <div class="stat-value" id="ollama-examples">-</div>
+                            <div style="font-size: 14px; color: var(--text-secondary);">Learning Examples</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-header">
+                                <div class="stat-icon">✅</div>
+                                <div class="stat-title">Positive Feedback</div>
+                            </div>
+                            <div class="stat-value" id="positive-feedback">-</div>
+                            <div style="font-size: 14px; color: var(--text-secondary);">Successful Generations</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-header">
+                                <div class="stat-icon">🔧</div>
+                                <div class="stat-title">Corrections</div>
+                            </div>
+                            <div class="stat-value" id="corrections-count">-</div>
+                            <div style="font-size: 14px; color: var(--text-secondary);">User Corrections</div>
+                        </div>
+                    </div>
+                    <button id="refresh-stats" class="send-btn" style="position: static; transform: none; width: auto; height: auto; border-radius: 8px; padding: 12px 24px;">
+                        🔄 Refresh Statistics
+                    </button>
+                </div>
+            </div>
+
+            <!-- Ollama Page -->
+            <div id="ollama-page" class="page">
+                <header class="main-header">
+                    <h1 class="page-title">🤖 Ollama Settings</h1>
+                    <p class="page-subtitle">Configure Ollama AI</p>
+                </header>
+                <div class="content-area">
+                    <div style="padding: 32px;">
+                        <div class="stat-card">
+                            <h3>Status</h3>
+                            <div id="ollama-detailed-status">Checking...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Global variables
+        let currentPage = 'chat';
+        let isOllamaEnabled = false;
+        let includeExplanation = true;
+        let prioritizeFunctions = true;
+
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeNavigation();
+            initializeChatInput();
+            checkOllamaStatus();
+            loadInitialData();
+            
+            // Auto-resize textarea
+            const chatInput = document.getElementById('chat-input');
+            chatInput.addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = this.scrollHeight + 'px';
+            });
+        });
+
+        // Navigation System
+        function initializeNavigation() {
+            const navItems = document.querySelectorAll('.nav-item');
+            
+            navItems.forEach(item => {
+                item.addEventListener('click', () => {
+                    const page = item.dataset.page;
+                    if (page) {
+                        switchPage(page);
+                        
+                        // Update active nav item
+                        navItems.forEach(nav => nav.classList.remove('active'));
+                        item.classList.add('active');
+                    }
+                });
+            });
+        }
+
+        function switchPage(page) {
+            // Hide all pages
+            document.querySelectorAll('.page').forEach(p => {
+                p.classList.remove('active');
+            });
+            
+            // Show selected page
+            const targetPage = document.getElementById(page + '-page');
+            if (targetPage) {
+                targetPage.classList.add('active');
+                currentPage = page;
+                
+                // Load page-specific data
+                if (page === 'examples') {
+                    loadExamples();
+                } else if (page === 'stats') {
+                    loadStats();
+                } else if (page === 'ollama') {
+                    loadOllamaStatus();
+                }
+            }
+        }
+
+        // Chat Input System
+        function initializeChatInput() {
+            const chatInput = document.getElementById('chat-input');
+            const sendBtn = document.getElementById('send-btn');
+            const explanationToggle = document.getElementById('explanation-toggle');
+            const ollamaToggle = document.getElementById('ollama-toggle');
+            const functionPriority = document.getElementById('function-priority');
+
+            // Send message on Enter (Shift+Enter for new line)
+            chatInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+
+            // Send button click
+            sendBtn.addEventListener('click', sendMessage);
+
+            // Toggle options
+            explanationToggle.addEventListener('click', () => {
+                explanationToggle.classList.toggle('active');
+                includeExplanation = explanationToggle.classList.contains('active');
+            });
+
+            ollamaToggle.addEventListener('click', () => {
+                if (isOllamaEnabled) {
+                    ollamaToggle.classList.toggle('active');
+                }
+            });
+
+            functionPriority.addEventListener('click', () => {
+                functionPriority.classList.toggle('active');
+                prioritizeFunctions = functionPriority.classList.contains('active');
+            });
+
+            // Teach button
+            const teachBtn = document.getElementById('teach-btn');
+            if (teachBtn) {
+                teachBtn.addEventListener('click', teachExample);
+            }
+
+            // Refresh stats button
+            const refreshStats = document.getElementById('refresh-stats');
+            if (refreshStats) {
+                refreshStats.addEventListener('click', loadStats);
+            }
+        }
+
+        // Quick prompt function
+        function quickPrompt(prompt) {
+            const chatInput = document.getElementById('chat-input');
+            chatInput.value = prompt;
+            sendMessage();
+        }
+
+        // Send message function
+        async function sendMessage() {
+            const chatInput = document.getElementById('chat-input');
+            const message = chatInput.value.trim();
+            
+            if (!message) return;
+
+            // Clear input and show chat
+            chatInput.value = '';
+            chatInput.style.height = 'auto';
+            showChatArea();
+
+            // Add user message
+            addMessage('user', message);
+
+            // Show typing indicator
+            showTypingIndicator();
+
+            try {
+                // Prepare request
+                const useOllama = document.getElementById('ollama-toggle').classList.contains('active');
+                const endpoint = useOllama ? '/api/v1/ai/generate-ollama' : '/api/v1/ai/generate';
+                
+                const requestData = {
+                    prompt: message,
+                    include_explanation: includeExplanation,
+                    prioritize_functions: prioritizeFunctions
+                };
+
+                if (useOllama) {
+                    requestData.use_ollama = true;
+                }
+
+                // Send request
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(requestData)
+                });
+
+                const data = await response.json();
+                
+                // Remove typing indicator
+                hideTypingIndicator();
+
+                if (response.ok) {
+                    // Add assistant response
+                    addAssistantMessage(data);
+                } else {
+                    addMessage('assistant', '🦆 Quack! Something went wrong: ' + (data.detail || 'Unknown error'));
+                }
+
+            } catch (error) {
+                console.error('Error:', error);
+                hideTypingIndicator();
+                addMessage('assistant', '🦆 Quack! I\'m having trouble connecting. Please try again!');
+            }
+        }
+
+        function showChatArea() {
+            document.getElementById('welcome-screen').style.display = 'none';
+            document.getElementById('chat-messages').style.display = 'flex';
+        }
+
+        function addMessage(type, content) {
+            const chatMessages = document.getElementById('chat-messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+            
+            const messageContent = document.createElement('div');
+            messageContent.className = 'message-content';
+            
+            const messageHeader = document.createElement('div');
+            messageHeader.className = 'message-header';
+            messageHeader.innerHTML = type === 'user' ? '<i class="fas fa-user"></i> You' : '<i class="fas fa-robot"></i> SkDucky 🦆';
+            
+            const messageText = document.createElement('div');
+            messageText.textContent = content;
+            
+            messageContent.appendChild(messageHeader);
+            messageContent.appendChild(messageText);
+            messageDiv.appendChild(messageContent);
+            
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function addAssistantMessage(data) {
+            const chatMessages = document.getElementById('chat-messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message assistant';
+            
+            const messageContent = document.createElement('div');
+            messageContent.className = 'message-content';
+            
+            const messageHeader = document.createElement('div');
+            messageHeader.className = 'message-header';
+            messageHeader.innerHTML = '<i class="fas fa-robot"></i> SkDucky 🦆';
+            
+            // Add explanation if available
+            if (data.explanation) {
+                const explanation = document.createElement('div');
+                explanation.textContent = data.explanation;
+                explanation.style.marginBottom = '12px';
+                messageContent.appendChild(messageHeader);
+                messageContent.appendChild(explanation);
+            } else {
+                messageContent.appendChild(messageHeader);
+            }
+            
+            // Add code block
+            if (data.code) {
+                const codeBlock = document.createElement('div');
+                codeBlock.className = 'code-block';
+                
+                const codeHeader = document.createElement('div');
+                codeHeader.className = 'code-header';
+                codeHeader.innerHTML = `
+                    <span>Skript Code</span>
+                    <button class="copy-btn" onclick="copyToClipboard(this)">
+                        <i class="fas fa-copy"></i> Copy
+                    </button>
+                `;
+                
+                const codeContent = document.createElement('pre');
+                codeContent.textContent = data.code;
+                codeContent.setAttribute('data-code', data.code);
+                
+                codeBlock.appendChild(codeHeader);
+                codeBlock.appendChild(codeContent);
+                messageContent.appendChild(codeBlock);
+            }
+            
+            // Add message if available
+            if (data.message) {
+                const message = document.createElement('div');
+                message.textContent = data.message;
+                message.style.marginTop = '8px';
+                message.style.fontSize = '14px';
+                message.style.color = 'var(--text-secondary)';
+                messageContent.appendChild(message);
+            }
+            
+            messageDiv.appendChild(messageContent);
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function showTypingIndicator() {
+            const chatMessages = document.getElementById('chat-messages');
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'typing-indicator';
+            typingDiv.id = 'typing-indicator';
+            
+            typingDiv.innerHTML = `
+                <span>🦆 SkDucky is thinking...</span>
+                <div class="typing-dots">
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                </div>
+            `;
+            
+            chatMessages.appendChild(typingDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function hideTypingIndicator() {
+            const typingIndicator = document.getElementById('typing-indicator');
+            if (typingIndicator) {
+                typingIndicator.remove();
+            }
+        }
+
+        function copyToClipboard(button) {
+            const codeElement = button.closest('.code-block').querySelector('pre');
+            const code = codeElement.getAttribute('data-code');
+            
+            navigator.clipboard.writeText(code).then(() => {
+                button.innerHTML = '<i class="fas fa-check"></i> Copied!';
+                setTimeout(() => {
+                    button.innerHTML = '<i class="fas fa-copy"></i> Copy';
+                }, 2000);
+            });
+        }
+
+        // Check Ollama status
+        async function checkOllamaStatus() {
+            try {
+                const response = await fetch('/api/v1/ai/ollama/status');
+                const data = await response.json();
+                
+                const statusElement = document.getElementById('ollama-status');
+                const ollamaToggle = document.getElementById('ollama-toggle');
+                
+                if (data.available) {
+                    statusElement.className = 'status-indicator online';
+                    statusElement.textContent = 'Online';
+                    isOllamaEnabled = true;
+                    ollamaToggle.style.opacity = '1';
+                } else {
+                    statusElement.className = 'status-indicator offline';
+                    statusElement.textContent = 'Offline';
+                    isOllamaEnabled = false;
+                    ollamaToggle.style.opacity = '0.5';
+                    ollamaToggle.classList.remove('active');
+                }
+            } catch (error) {
+                console.error('Error checking Ollama status:', error);
+                const statusElement = document.getElementById('ollama-status');
+                statusElement.className = 'status-indicator offline';
+                statusElement.textContent = 'Error';
+            }
+        }
+
+        // Teach example function
+        async function teachExample() {
+            const prompt = document.getElementById('learn-prompt').value.trim();
+            const code = document.getElementById('learn-code').value.trim();
+            const resultDiv = document.getElementById('learn-result');
+            
+            if (!prompt || !code) {
+                resultDiv.innerHTML = '<div style="color: var(--error-color);">Please fill in both fields!</div>';
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/v1/ai/learn', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        prompt: prompt,
+                        code: code
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = '<div style="color: var(--success-color);">🦆 Quack! I learned something new! ' + data.message + '</div>';
+                    document.getElementById('learn-prompt').value = '';
+                    document.getElementById('learn-code').value = '';
+                } else {
+                    resultDiv.innerHTML = '<div style="color: var(--error-color);">Error: ' + (data.detail || 'Unknown error') + '</div>';
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                resultDiv.innerHTML = '<div style="color: var(--error-color);">Connection error. Please try again.</div>';
+            }
+        }
+
+        // Load examples
+        async function loadExamples() {
+            const container = document.getElementById('examples-container');
+            container.innerHTML = '<div class="loading"><div class="spinner"></div><p>Loading examples...</p></div>';
+
+            try {
+                const response = await fetch('/api/v1/ai/examples');
+                const examples = await response.json();
+                
+                if (examples.length === 0) {
+                    container.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--text-secondary);">No examples yet. Start teaching SkDucky!</div>';
+                    return;
+                }
+
+                let html = '<div style="padding: 32px;"><div style="display: grid; gap: 20px;">';
+                
+                examples.forEach((example, index) => {
+                    html += `
+                        <div class="stat-card">
+                            <div style="margin-bottom: 12px;">
+                                <strong>Prompt:</strong> ${example.prompt}
+                            </div>
+                            <div class="code-block">
+                                <pre>${example.code}</pre>
+                            </div>
+                            <div style="font-size: 12px; color: var(--text-secondary); margin-top: 8px;">
+                                Used ${example.usage_count || 0} times
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                html += '</div></div>';
+                container.innerHTML = html;
+                
+            } catch (error) {
+                console.error('Error loading examples:', error);
+                container.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--error-color);">Error loading examples</div>';
+            }
+        }
+
+        // Load statistics
+        async function loadStats() {
+            try {
+                const response = await fetch('/api/v1/ai/learning-stats');
+                const stats = await response.json();
+                
+                document.getElementById('traditional-examples').textContent = stats.traditional_ai?.total_examples || 0;
+                document.getElementById('ollama-examples').textContent = stats.ollama_ai?.learning_examples || 0;
+                document.getElementById('positive-feedback').textContent = stats.feedback_data?.positive || 0;
+                document.getElementById('corrections-count').textContent = stats.feedback_data?.corrections || 0;
+                
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+
+        // Load Ollama status for settings page
+        async function loadOllamaStatus() {
+            const statusDiv = document.getElementById('ollama-detailed-status');
+            statusDiv.innerHTML = 'Checking...';
+
+            try {
+                const response = await fetch('/api/v1/ai/ollama/status');
+                const data = await response.json();
+                
+                let html = '<div style="margin-bottom: 16px;">';
+                html += `<div><strong>Status:</strong> ${data.available ? '✅ Available' : '❌ Not Available'}</div>`;
+                if (data.model) {
+                    html += `<div><strong>Model:</strong> ${data.model}</div>`;
+                }
+                if (data.version) {
+                    html += `<div><strong>Version:</strong> ${data.version}</div>`;
+                }
+                html += '</div>';
+                
+                statusDiv.innerHTML = html;
+                
+            } catch (error) {
+                console.error('Error loading Ollama status:', error);
+                statusDiv.innerHTML = '<div style="color: var(--error-color);">Error loading status</div>';
+            }
+        }
+
+        // Load initial data
+        function loadInitialData() {
+            checkOllamaStatus();
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+{
+  "query": "doc_1001",
+  "timestamp": "2025-07-31T19:36:39.113058",
+  "data": {
+    "id": "1001",
+    "title": "",
+    "description": "",
+    "syntax": [],
+    "examples": [],
+    "required_addons": [],
+    "since": ""
+  }
+}

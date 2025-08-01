@@ -1,0 +1,132 @@
+[
+  {
+    "prompt": "i want that when a player dies it gives 1 of diamond to the attacker",
+    "generated_code": "on death:\n    if victim is a player:\n        if attacker exists:\n            give 1 diamond to attacker",
+    "feedback_type": "correct",
+    "observations": "Code was correct and helpful",
+    "corrected_code": null,
+    "timestamp": "2025-07-31T22:49:33.461688"
+  },
+  {
+    "prompt": "i want a function that returns a diamond",
+    "generated_code": "function skProgressBar(value:number, max:number, length: integer, c:text, p:text, r:text, fullbar:text=\"\")::string:\n    set {_percentage} to max(({_value} / {_max}), 0)\n    set {_completion} to {_percentage} * {_length}\n    set {_bar} to \"\"\n    set {_icons1} to floor({_completion})\n    set {_icons2} to floor({_length} - {_icons1})\n    \n    if {_percentage} < 1:\n        loop {_icons1} times:\n            set {_bar} to \"%{_bar}%%{_c}%\"\n        set {_bar} to \"%{_bar}%%{_p}%\"\n        loop ({_icons2}-1) times:\n            set {_bar} to \"%{_bar}%%{_r}%\"\n    else:\n        if {_fullbar} = \"\":\n            loop {_length} times:\n                set {_bar} to \"%{_bar}%%{_c}%\"\n        else:\n            set {_bar} to {_fullbar}\n        \n    return formatted {_bar}",
+    "feedback_type": "incorrect",
+    "observations": "Create a function with returns, returns are the \"::\" next to () in a function.",
+    "corrected_code": "function returnDiamond() :: item:\n    return diamond",
+    "timestamp": "2025-07-31T23:02:21.869316"
+  },
+  {
+    "prompt": "make a function that returns a emerald",
+    "generated_code": "function returnEmerald()::item:\n    return emerald",
+    "feedback_type": "correct",
+    "observations": "Code was correct and helpful",
+    "corrected_code": null,
+    "timestamp": "2025-07-31T23:06:38.581304"
+  },
+  {
+    "prompt": "make a function that returns a gold",
+    "generated_code": "function returnDiamond()::item:\n    return diamond",
+    "feedback_type": "incorrect",
+    "observations": "This is not a gold",
+    "corrected_code": "function returnGold()::item:\n    return gold",
+    "timestamp": "2025-07-31T23:07:01.267291"
+  },
+  {
+    "prompt": "make a function that returns a iron ingot",
+    "generated_code": "function returnIron()::item:\n    return iron ingot",
+    "feedback_type": "correct",
+    "observations": "Code was correct and helpful",
+    "corrected_code": null,
+    "timestamp": "2025-07-31T23:07:11.246296"
+  },
+  {
+    "prompt": "make a function that returns a gold ingot",
+    "generated_code": "function returnGold()::item:\n    return gold ingot",
+    "feedback_type": "correct",
+    "observations": "Code was correct and helpful",
+    "corrected_code": null,
+    "timestamp": "2025-07-31T23:07:16.294260"
+  },
+  {
+    "prompt": "make a function that gives the player 1 emerald and 1 gold ingot",
+    "generated_code": "function returnGold()::item:\n    return gold",
+    "feedback_type": "incorrect",
+    "observations": "This is not a function giving a player a item, this is a return function",
+    "corrected_code": "function giveItems(p: player):\n    give 1 of emerald to {_p}\n    give 1 of gold ingot to {_p}",
+    "timestamp": "2025-07-31T23:08:40.567984"
+  },
+  {
+    "prompt": "make a function that gives the player 1 diamond and 1 gold ingot",
+    "generated_code": "function giveItems(p: player):\n    give 1 of emerald to {_p}\n    give 1 of gold ingot to {_p}",
+    "feedback_type": "incorrect",
+    "observations": "it says \"give 1 of emerald to {_p}\" when i said 1 diamond",
+    "corrected_code": "function giveItems(p: player):\n    give 1 of diamond to {_p}\n    give 1 of gold ingot to {_p}",
+    "timestamp": "2025-07-31T23:09:11.149913"
+  },
+  {
+    "prompt": "make a function that gives the player 1 iron ingot and 1 gold ingot",
+    "generated_code": "function giveItems(p: player):\n    give 1 of emerald to {_p}\n    give 1 of gold ingot to {_p}",
+    "feedback_type": "incorrect",
+    "observations": "it says emerald when i said iron ingot firstly",
+    "corrected_code": "function giveItems(p: player):\n    give 1 of iron ingot to {_p}\n    give 1 of gold ingot to {_p}",
+    "timestamp": "2025-07-31T23:09:42.930620"
+  },
+  {
+    "prompt": "make a function that gives the player 1 of diamond",
+    "generated_code": "function giveItems(p: player):\n    give 1 of diamond to {_p}\n    give 1 of gold ingot to {_p}",
+    "feedback_type": "incorrect",
+    "observations": "I only said 1 of diamond, not 1 of gold ingot extra",
+    "corrected_code": "function giveItems(p: player):\n    give 1 of diamond to {_p}",
+    "timestamp": "2025-07-31T23:10:36.712719"
+  },
+  {
+    "prompt": "make a function that gives the player 1 of diamond, 1 of emerald, 1 of gold ingot and 1 of iron ingot",
+    "generated_code": "function giveItems(p: player):\n    give 1 of diamond to {_p}\n    give 1 of emerald to {_p}\n    give 1 of gold ingot to {_p}\n    give 1 of iron ingot to {_p}",
+    "feedback_type": "correct",
+    "observations": "Code was correct and helpful",
+    "corrected_code": null,
+    "timestamp": "2025-07-31T23:17:17.489111"
+  },
+  {
+    "prompt": "i want a kick command",
+    "generated_code": "command /kick <player> [<text>]:\n    permission: op\n    trigger:\n        if arg-2 is set:\n            kick arg-1 due to \"%arg-2%\"\n        else:\n            kick arg-1 due to \"Kicked by an operator\"",
+    "feedback_type": "correct",
+    "observations": "Code was correct and helpful",
+    "corrected_code": null,
+    "timestamp": "2025-07-31T23:26:34.040120"
+  },
+  {
+    "prompt": "i want a command that gives 1 diamond to a player",
+    "generated_code": "function giveItems(p: player):\n    give 1 of diamond to {_p}",
+    "feedback_type": "incorrect",
+    "observations": "i said Command, not Function",
+    "corrected_code": "command diamond <player>:\n    permission: op\n    trigger:\n        give 1 of diamond to arg-1",
+    "timestamp": "2025-07-31T23:35:30.816982"
+  },
+  {
+    "prompt": "i want a command that gives 1 iron ingot to a player",
+    "generated_code": "command iron ingot <player>:\n    permission: op\n    trigger:\n        give 1 of iron ingot to arg-1",
+    "feedback_type": "incorrect",
+    "observations": "\"command iron ingot <player>:\" a command can't be separated \"iron ingot\" it has to have a \"iron_ingot\" or \"ironingot\" all together",
+    "corrected_code": "command ironingot <player>:\n    permission: op\n    trigger:\n        give 1 of iron ingot to arg-1",
+    "timestamp": "2025-07-31T23:36:55.646311"
+  },
+  {
+    "prompt": "make a functions that returns a diamond then make that when the player join the player gets the function diamond",
+    "generated_code": "function giveItems(p: player):\n    give 1 of diamond to {_p}\n    give 1 of gold ingot to {_p}",
+    "feedback_type": "incorrect",
+    "observations": "Error Type: logic_error\nSpecific Issue: I asked for making a function that returns a diamond then when the player joins the diamond it's given to the player\nExpected Behavior: i did expect to the player get the diamond on join",
+    "corrected_code": "function diamond() :: item:\n    return diamond\n\non join:\n    give player 1 of diamond()",
+    "timestamp": "2025-07-31T23:43:54.409259",
+    "analysis": {
+      "error_type": "item_mismatch",
+      "specific_issue": "unspecified",
+      "solution_pattern": "none",
+      "confidence": 0.8
+    },
+    "learning_actions": [
+      "learned_corrected_version",
+      "created_error_pattern"
+    ]
+  }
+]

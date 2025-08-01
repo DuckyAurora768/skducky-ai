@@ -1,0 +1,9 @@
+[
+  {
+    "prompt_pattern": "make a functions that returns a diamond then make that when the player join the player gets the function diamond",
+    "incorrect_approach": {
+      "code_snippet": "function giveItems(p: player):\n    give 1 of diamond to {_p}\n    give 1 of gold ingot to {_p}",
+      "error_type": "item_mismatch",
+      "issue": "unspecified"
+    },
+    "avoid_when": 
