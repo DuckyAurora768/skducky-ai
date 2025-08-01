@@ -24,10 +24,21 @@ class SkDuckyAIService:
         self.knowledge_path = knowledge_path
         self.learning_enabled = True
         
-        # Ollama configuration (disabled in production)
+        # Ollama configuration - now ENABLED for production with CodeLlama!
         self.ollama_base_url = os.environ.get("OLLAMA_URL", "http://127.0.0.1:11434")
         self.ollama_model = "codellama"
         self.ollama_enabled = os.environ.get("OLLAMA_ENABLED", "false").lower() == "true"
+        
+        # Check Ollama availability at startup
+        if self.ollama_enabled:
+            print("🦆 Checking Ollama availability...")
+            self._check_ollama_availability()
+            if self.ollama_enabled:
+                print(f"✅ Ollama connected! Using {self.ollama_model}")
+            else:
+                print("❌ Ollama not available, using examples only")
+        else:
+            print("🦆 Ollama disabled by configuration")
         
         # Inicializar knowledge base
         self.knowledge = {
@@ -932,11 +943,40 @@ class SkDuckyAIService:
         }
 
     def _check_ollama_availability(self):
-        """Check if Ollama is available"""
+        """Check if Ollama is available and try to ensure CodeLlama model"""
         try:
-            response = requests.get(f"{self.ollama_base_url}/api/tags", timeout=5)
-            self.ollama_enabled = response.status_code == 200
-        except Exception:
+            # First check if Ollama service is running
+            response = requests.get(f"{self.ollama_base_url}/api/tags", timeout=10)
+            if response.status_code == 200:
+                models = response.json().get("models", [])
+                model_names = [model.get("name", "") for model in models]
+                
+                # Check if CodeLlama is available
+                codellama_available = any("codellama" in name.lower() for name in model_names)
+                
+                if codellama_available:
+                    print("✅ CodeLlama model found and ready!")
+                    self.ollama_enabled = True
+                else:
+                    print("⚠️ CodeLlama not found, trying to pull...")
+                    # Try to pull CodeLlama
+                    pull_response = requests.post(
+                        f"{self.ollama_base_url}/api/pull",
+                        json={"name": "codellama"},
+                        timeout=300  # 5 minutes for model download
+                    )
+                    if pull_response.status_code == 200:
+                        print("✅ CodeLlama downloaded successfully!")
+                        self.ollama_enabled = True
+                    else:
+                        print("❌ Failed to download CodeLlama")
+                        self.ollama_enabled = False
+            else:
+                print(f"❌ Ollama service not responding (status: {response.status_code})")
+                self.ollama_enabled = False
+                
+        except Exception as e:
+            print(f"❌ Ollama connection failed: {e}")
             self.ollama_enabled = False
     
     def generate_with_ollama_hybrid(self, prompt: str, relevant_examples: List[Dict], include_explanation: bool = False) -> Dict:
