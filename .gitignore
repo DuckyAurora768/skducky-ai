@@ -37,3 +37,7 @@ Thumbs.db
 
 # Ollama models (too large for git)
 models/cache/models--*/
+
+# Exclude alternative implementations
+skducky-ollama-ai/
+skducky-ollama-ai-1/

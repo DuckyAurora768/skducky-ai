@@ -1,1 +1,0 @@
-# This file initializes the models module, allowing for the import of data models.
