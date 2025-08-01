@@ -185,6 +185,21 @@ async def submit_ollama_feedback(request: dict):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@router.post("/codellama/feedback")
+async def submit_codellama_feedback(request: dict):
+    """Submit feedback for CodeLlama to improve future generations"""
+    try:
+        result = ai_service.submit_codellama_feedback(
+            prompt=request.get("prompt", ""),
+            generated_code=request.get("generated_code", ""),
+            feedback_type=request.get("feedback_type", "positive"),  # 'positive', 'negative', 'correction'
+            corrected_code=request.get("corrected_code"),
+            comments=request.get("comments", "")
+        )
+        return {"message": result, "success": True}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @router.get("/learning/stats")
 async def get_learning_stats():
     """Get comprehensive learning statistics for both traditional AI and Ollama"""

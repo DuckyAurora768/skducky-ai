@@ -61,22 +61,33 @@ class SkDuckyAIService:
         return f"🦆 Quack quack! I learned a new trick: '{prompt}' 📚✨"
 
     def generate_code(self, request: AIRequest) -> AIResponse:
-        """Generate code using intelligent matching, knowledge base, and optionally Ollama"""
+        """Generate code using hybrid system: Ollama + Examples + Knowledge Base"""
         prompt = request.prompt.strip().lower()
 
-        # Check if Ollama should be used and is available
-        if hasattr(request, 'use_ollama') and request.use_ollama and self.ollama_enabled:
-            ollama_result = self.generate_with_ollama(request.prompt, True)
+        # 🦆 HYBRID SYSTEM: If Ollama is available, use it WITH examples context
+        if self.ollama_enabled:
+            # Find relevant examples first to give context to Ollama
+            relevant_examples = self._find_relevant_examples(prompt)
+            
+            # Generate with Ollama using examples as context
+            ollama_result = self.generate_with_ollama_hybrid(
+                request.prompt, 
+                relevant_examples,
+                request.include_explanation if hasattr(request, 'include_explanation') else False
+            )
+            
             if ollama_result.get("code"):
                 return AIResponse(
                     code=ollama_result["code"],
-                    explanation=ollama_result.get("explanation", "Generated with Ollama AI"),
-                    confidence=0.85,  # High confidence for Ollama
-                    source="ollama",
-                    examples_used=[],
-                    model_info=f"Ollama {self.ollama_model}",
-                    message=ollama_result.get("message", "Generated with Ollama")
+                    explanation=ollama_result.get("explanation", "Generated with CodeLlama + learned examples"),
+                    confidence=0.9,  # High confidence for hybrid system
+                    source="hybrid_ollama_examples",
+                    examples_used=ollama_result.get("examples_used", []),
+                    model_info=f"CodeLlama + {len(relevant_examples)} examples",
+                    message=ollama_result.get("message", "🦆 Generated with AI + learned patterns!")
                 )
+
+        # Fallback to traditional example-based system
 
         # First, try intelligent pattern matching using knowledge base
         intelligent_result = self._try_intelligent_generation(prompt)
@@ -928,13 +939,102 @@ class SkDuckyAIService:
         except Exception:
             self.ollama_enabled = False
     
+    def generate_with_ollama_hybrid(self, prompt: str, relevant_examples: List[Dict], include_explanation: bool = False) -> Dict:
+        """🦆 HYBRID: Generate Skript code using Ollama AI + learned examples context"""
+        if not self.ollama_enabled:
+            return {
+                "code": "",
+                "message": "🦆 Quack! Using built-in learning system instead of Ollama AI.\n\n✨ This is normal in production! I can still help you generate Skript code using my learned examples and patterns.\n\n💡 Want to try again? Just describe what you want to create!",
+                "error": "Service intentionally disabled"
+            }
+        
+        try:
+            # Build context with relevant examples for CodeLlama
+            examples_context = self._build_examples_context_for_ollama(relevant_examples, prompt)
+            
+            # Enhanced prompt with examples and Skript expertise
+            enhanced_prompt = f"""You are SkDucky 🦆, an expert Skript developer duck! You learn from examples and create better code.
+
+🦆 DUCKY'S HYBRID APPROACH:
+1. ANALYZE the relevant examples I found for this request
+2. LEARN from their syntax, patterns, and structure  
+3. GENERATE improved code using that knowledge
+4. EXPLAIN what you learned from the examples
+
+🏗️ SKRIPT SYNTAX RULES:
+- Use proper indentation (4 spaces)
+- Commands: 'command /name:' with 'trigger:' block
+- Events: 'on event:' format
+- Messages: 'send "text" to player'
+- Items: 'give X Y to player'
+
+REQUEST: {prompt}
+
+🔍 RELEVANT EXAMPLES I FOUND:
+{examples_context}
+
+📝 INSTRUCTIONS:
+- Use the examples' syntax patterns and structure
+- Improve upon them if possible
+- Explain what you learned from each example
+- Generate clean, working Skript code
+
+Generate ONLY the Skript code, followed by explanation if requested."""
+
+            # Make request to Ollama
+            response = requests.post(
+                f"{self.ollama_base_url}/api/generate",
+                json={
+                    "model": self.ollama_model,
+                    "prompt": enhanced_prompt,
+                    "stream": False,
+                    "options": {
+                        "temperature": 0.3,  # Lower for more consistent code
+                        "top_p": 0.9,
+                        "top_k": 50,
+                        "num_predict": 300
+                    }
+                },
+                timeout=15
+            )
+
+            if response.status_code == 200:
+                result_text = response.json().get("response", "").strip()
+                
+                # Extract code from response
+                code = self._extract_code_from_ollama_response(result_text)
+                
+                if code:
+                    result = {
+                        "code": code,
+                        "message": f"🦆 Quack! Generated with CodeLlama + {len(relevant_examples)} learned examples! ✨",
+                        "model_used": self.ollama_model,
+                        "source": "hybrid_ollama_examples",
+                        "examples_used": [ex.get("prompt", "") for ex in relevant_examples[:3]]
+                    }
+                    
+                    if include_explanation:
+                        explanation = self._generate_hybrid_explanation(prompt, code, relevant_examples)
+                        result["explanation"] = explanation
+                        
+                    return result
+                else:
+                    # Fallback to learning system when Ollama gives no code
+                    print("🦆 Ollama gave no code - falling back to learning system")
+                    return self._fallback_to_examples(prompt, relevant_examples, include_explanation)
+                    
+        except Exception as e:
+            # Fallback to learning system on any error
+            print(f"🦆 Ollama hybrid error: {e} - falling back to learning system")
+            return self._fallback_to_examples(prompt, relevant_examples, include_explanation)
+
     def generate_with_ollama(self, prompt: str, include_explanation: bool = False) -> Dict:
         """Generate Skript code using Ollama AI with enhanced context"""
         if not self.ollama_enabled:
             return {
                 "code": "",
-                "message": "🦆 Quack! Ollama AI isn't available right now.\n\n💡 To enable advanced AI features:\n1. Visit the Ollama Settings page\n2. Follow the setup guide\n3. Or run setup_ollama.bat\n\nDon't worry - I can still help with basic Skript generation! 🚀",
-                "error": "Service unavailable"
+                "message": "🦆 Quack! Using built-in learning system instead of Ollama AI.\n\n✨ This is normal in production! I can still help you generate Skript code using my learned examples and patterns.\n\n💡 Want to try again? Just describe what you want to create!",
+                "error": "Service intentionally disabled"
             }
         
         try:
@@ -1445,6 +1545,178 @@ This code was partially correct but had some issues. Learn from this feedback fo
             
         except Exception as e:
             print(f"Error updating knowledge from partial feedback: {e}")
+
+    # === HYBRID SYSTEM AUXILIARY METHODS ===
+    
+    def _build_examples_context_for_ollama(self, relevant_examples: List[Dict], prompt: str) -> str:
+        """Build context from relevant examples for Ollama"""
+        if not relevant_examples:
+            return "No directly relevant examples found, but use Skript best practices."
+        
+        context_parts = []
+        
+        for i, example in enumerate(relevant_examples[:3], 1):
+            context_parts.append(f"EXAMPLE {i}:")
+            context_parts.append(f"User Request: {example.get('prompt', 'N/A')}")
+            context_parts.append(f"Working Code:\n{example.get('code', 'N/A')}")
+            context_parts.append(f"Usage Count: {example.get('usage_count', 0)} times")
+            context_parts.append("")
+        
+        context_parts.append("LEARN FROM THESE PATTERNS:")
+        context_parts.append("- Notice syntax structure and indentation")
+        context_parts.append("- Copy command/event formats that work")
+        context_parts.append("- Use similar variable names and logic flow")
+        context_parts.append("- Maintain consistent Skript syntax")
+        
+        return "\n".join(context_parts)
+    
+    def _generate_hybrid_explanation(self, prompt: str, code: str, examples: List[Dict]) -> str:
+        """Generate explanation for hybrid Ollama + examples generation"""
+        explanation_parts = []
+        
+        explanation_parts.append(f"🦆 **Hybrid Generation**: CodeLlama + {len(examples)} learned examples")
+        explanation_parts.append("")
+        
+        if examples:
+            explanation_parts.append("📚 **Learning Sources**:")
+            for example in examples[:2]:
+                explanation_parts.append(f"- '{example.get('prompt', 'Unknown')}' (used {example.get('usage_count', 0)} times)")
+            explanation_parts.append("")
+        
+        explanation_parts.append("🧠 **AI Analysis**:")
+        explanation_parts.append("- CodeLlama analyzed the learned patterns")
+        explanation_parts.append("- Applied Skript syntax rules and best practices")
+        explanation_parts.append("- Generated optimized code based on examples")
+        explanation_parts.append("")
+        
+        explanation_parts.append("✨ **Code Features**:")
+        if "command /" in code.lower():
+            explanation_parts.append("- Command structure with proper permissions")
+        if "on " in code.lower():
+            explanation_parts.append("- Event-driven structure")
+        if "give " in code.lower():
+            explanation_parts.append("- Item giving functionality")
+        if "send " in code.lower():
+            explanation_parts.append("- Player messaging system")
+        
+        return "\n".join(explanation_parts)
+    
+    def _fallback_to_examples(self, prompt: str, examples: List[Dict], include_explanation: bool) -> Dict:
+        """Fallback to examples when Ollama fails"""
+        if not examples:
+            return {
+                "code": "# No examples available for this request",
+                "message": "🦆 No examples found and Ollama unavailable. Please teach me an example!",
+                "source": "fallback_no_examples"
+            }
+        
+        # Use the best example as fallback
+        best_example = examples[0]
+        best_example["usage_count"] = best_example.get("usage_count", 0) + 1
+        
+        result = {
+            "code": best_example.get("code", ""),
+            "message": f"🦆 Used learned example as fallback (Ollama issue)",
+            "source": "fallback_examples",
+            "examples_used": [best_example.get("prompt", "")]
+        }
+        
+        if include_explanation:
+            result["explanation"] = f"🦆 Used example: '{best_example.get('prompt', 'Unknown')}' (confidence: {best_example.get('usage_count', 0)} uses)"
+        
+        return result
+    
+    def _find_relevant_examples(self, prompt: str) -> List[Dict]:
+        """Find examples relevant to the prompt"""
+        relevant = []
+        prompt_words = set(prompt.lower().split())
+        
+        for example in self.examples:
+            example_words = set(example.get("prompt", "").lower().split())
+            
+            # Calculate word overlap
+            overlap = len(prompt_words.intersection(example_words))
+            if overlap > 0:
+                example["relevance_score"] = overlap
+                relevant.append(example)
+        
+        # Sort by relevance and usage count
+        relevant.sort(key=lambda x: (x.get("relevance_score", 0), x.get("usage_count", 0)), reverse=True)
+        
+        return relevant[:5]  # Return top 5 most relevant
+
+    # === FEEDBACK SYSTEM FOR CODELLAMA ===
+    
+    def submit_codellama_feedback(self, prompt: str, generated_code: str, feedback_type: str, corrected_code: str = None, comments: str = "") -> str:
+        """Submit feedback for CodeLlama to improve future generations"""
+        try:
+            feedback_entry = {
+                "prompt": prompt,
+                "generated_code": generated_code,
+                "feedback_type": feedback_type,  # 'positive', 'negative', 'correction'
+                "corrected_code": corrected_code,
+                "comments": comments,
+                "timestamp": datetime.now().isoformat(),
+                "source": "codellama_feedback"
+            }
+            
+            # Save to dedicated CodeLlama feedback file
+            feedback_path = "codellama_feedback.json"
+            feedbacks = []
+            
+            if os.path.exists(feedback_path):
+                with open(feedback_path, "r", encoding="utf-8") as f:
+                    feedbacks = json.load(f)
+            
+            feedbacks.append(feedback_entry)
+            
+            # Keep only last 200 feedback entries to prevent huge files
+            if len(feedbacks) > 200:
+                feedbacks = feedbacks[-200:]
+            
+            with open(feedback_path, "w", encoding="utf-8") as f:
+                json.dump(feedbacks, f, indent=2, ensure_ascii=False)
+            
+            # If positive feedback, reinforce the pattern
+            if feedback_type == "positive":
+                self._reinforce_positive_pattern(prompt, generated_code, comments)
+            
+            # If correction provided, learn from it
+            if corrected_code and feedback_type in ["negative", "correction"]:
+                self.learn(prompt, corrected_code)  # Add corrected version to examples
+                self._mark_negative_pattern(prompt, generated_code, corrected_code, comments)
+            
+            return f"🦆 Feedback received! CodeLlama will learn from this for future generations."
+            
+        except Exception as e:
+            return f"🦆 Error processing feedback: {str(e)}"
+    
+    def _reinforce_positive_pattern(self, prompt: str, code: str, comments: str):
+        """Reinforce positive patterns for future CodeLlama context"""
+        pattern_entry = {
+            "type": "positive_reinforcement",
+            "prompt": prompt,
+            "successful_code": code,
+            "success_reason": comments,
+            "timestamp": datetime.now().isoformat(),
+            "confidence_boost": 0.3
+        }
+        
+        self._add_to_ollama_context(pattern_entry)
+    
+    def _mark_negative_pattern(self, prompt: str, bad_code: str, corrected_code: str, issue: str):
+        """Mark negative patterns to avoid in future CodeLlama generations"""
+        negative_entry = {
+            "type": "negative_pattern",
+            "prompt": prompt,
+            "problematic_code": bad_code,
+            "corrected_code": corrected_code,
+            "issue_description": issue,
+            "timestamp": datetime.now().isoformat(),
+            "avoidance_weight": 0.5
+        }
+        
+        self._add_to_ollama_context(negative_entry)
 
 # --- MANUAL TESTING ---
 
