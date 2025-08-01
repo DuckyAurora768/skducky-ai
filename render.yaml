@@ -1,21 +1,30 @@
 services:
+  # Ollama Private Service
+  - type: pserv
+    name: skducky-ollama
+    region: oregon
+    runtime: docker
+    dockerContext: ./ollama
+    dockerfilePath: ./ollama/Dockerfile
+    plan: starter
+    
+  # Main SkDucky AI Application  
   - type: web
     name: skducky-ai
     env: python
     runtime: python-3.12.0
-    buildCommand: |
-      pip install --upgrade pip && 
-      pip install -r requirements.txt &&
-      curl -fsSL https://ollama.ai/install.sh | sh &&
-      chmod +x start_with_ollama.sh
-    startCommand: ./start_with_ollama.sh
+    buildCommand: pip install --upgrade pip && pip install -r requirements.txt
+    startCommand: gunicorn app:app -w 1 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT --timeout 300
     envVars:
       - key: PYTHON_VERSION
         value: 3.12.0
       - key: OLLAMA_ENABLED
         value: true
       - key: OLLAMA_URL
-        value: http://127.0.0.1:11434
+        fromService:
+          name: skducky-ollama
+          type: pserv
+          property: hostport
       - key: PYTHONPATH
         value: .
       - key: PORT

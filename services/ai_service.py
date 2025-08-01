@@ -25,13 +25,19 @@ class SkDuckyAIService:
         self.learning_enabled = True
         
         # Ollama configuration - now ENABLED for production with CodeLlama!
-        self.ollama_base_url = os.environ.get("OLLAMA_URL", "http://127.0.0.1:11434")
+        ollama_url = os.environ.get("OLLAMA_URL", "127.0.0.1:11434")
+        # Add http:// if not present (Render gives us host:port format)
+        if not ollama_url.startswith("http"):
+            self.ollama_base_url = f"http://{ollama_url}"
+        else:
+            self.ollama_base_url = ollama_url
+        
         self.ollama_model = "codellama"
         self.ollama_enabled = os.environ.get("OLLAMA_ENABLED", "false").lower() == "true"
         
         # Check Ollama availability at startup
         if self.ollama_enabled:
-            print("🦆 Checking Ollama availability...")
+            print(f"🦆 Checking Ollama availability at {self.ollama_base_url}...")
             self._check_ollama_availability()
             if self.ollama_enabled:
                 print(f"✅ Ollama connected! Using {self.ollama_model}")
